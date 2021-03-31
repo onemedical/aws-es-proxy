@@ -21,7 +21,6 @@ commands:
             echo "export IMAGE_TAG='${image_tag}'" >> $BASH_ENV
 
 jobs:
-
   release:
     machine:
       docker_layer_caching: true
@@ -39,13 +38,7 @@ workflows:
   version: 2
   everything:
     jobs:
-      - unit_tests:
-          filters:
-            tags:
-              only: /^v\d+\.\d+\.\d+/
       - release:
-          requires:
-            - unit_tests
           filters:
             tags:
               only: /^v\d+\.\d+\.\d+/
