@@ -31,7 +31,7 @@ jobs:
       - aws-ecr/build-and-push-image:
           dockerfile: Dockerfile
           region: AWS_DEFAULT_REGION
-          repo: aws-es-proxy
+          repo: onemedical/aws-es-proxy
           tag: ${IMAGE_TAG}
 
 workflows:
