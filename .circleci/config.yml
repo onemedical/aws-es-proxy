@@ -10,14 +10,8 @@ commands:
       - run:
           name: Create IMAGE_TAG env var based on the current branch
           command: |
-            if [[ -n "${CIRCLE_TAG:-}" ]]; then
-              image_tag=${CIRCLE_TAG}
-            elif [[ $CIRCLE_BRANCH = "master" || $CIRCLE_BRANCH = "staging" ]]; then
-              image_tag=${CIRCLE_BRANCH}-${CIRCLE_SHA1}
-            else
-              image_tag=branch-$(echo $CIRCLE_BRANCH | tr / -)
-            fi
-            echo "export IMAGE_TAG='${image_tag}'" >> $BASH_ENV
+            echo 'export VERSION_TAG=branch-$(echo $CIRCLE_BRANCH | tr / -)' >> $BASH_ENV
+            echo 'export RELEASE_TAG=$([[ "$CIRCLE_BRANCH" == "master" ]] && echo "latest,")' >> $BASH_ENV
 
 jobs:
   release:
@@ -29,7 +23,8 @@ jobs:
       - aws-ecr/build-and-push-image:
           dockerfile: Dockerfile
           repo: onemedical/aws-es-proxy
-          tag: ${IMAGE_TAG}
+          # comma added by RELEASE_TAG if set. Kludge to get this to work is simpler than most alternatives.
+          tag: '${VERSION_TAG},${VERSION_TAG}-${CIRCLE_SHA1},${RELEASE_TAG}${CIRCLE_TAG}'
 
 workflows:
   version: 2
