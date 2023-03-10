@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httputil"
 	"net/url"
 	"os"
@@ -27,6 +28,7 @@ import (
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/net/publicsuffix"
 )
 
 func logger(debug bool) {
@@ -96,9 +98,15 @@ func newProxy(args ...interface{}) *proxy {
 		return http.ErrUseLastResponse
 	}
 
+	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	client := http.Client{
 		Timeout:       time.Duration(args[5].(int)) * time.Second,
 		CheckRedirect: noRedirect,
+		Jar:           jar,
 	}
 
 	return &proxy{
@@ -163,6 +171,7 @@ func (p *proxy) parseEndpoint() error {
 		for _, partition := range endpoints.DefaultPartitions() {
 			for region := range partition.Regions() {
 				awsEndpoints = append(awsEndpoints, fmt.Sprintf("%s.es.%s", region, partition.DNSSuffix()))
+				awsEndpoints = append(awsEndpoints, fmt.Sprintf("%s.aoss.%s", region, partition.DNSSuffix()))
 			}
 		}
 
@@ -178,7 +187,7 @@ func (p *proxy) parseEndpoint() error {
 		if isAWSEndpoint {
 			// Extract region and service from link. This should be save now
 			parts := strings.Split(link.Host, ".")
-			p.region, p.service = parts[1], "es"
+			p.region, p.service = parts[1], parts[2]
 			logrus.Debugln("AWS Region", p.region)
 		}
 	}
@@ -413,12 +422,24 @@ func addHeaders(src, dest http.Header) {
 		dest.Add("Kbn-Version", val[0])
 	}
 
+	if val, ok := src["Osd-Version"]; ok {
+		dest.Add("Osd-Version", val[0])
+	}
+
+	if val, ok := src["Osd-Xsrf"]; ok {
+		dest.Add("Osd-Xsrf", val[0])
+	}
+
 	if val, ok := src["Content-Type"]; ok {
 		dest.Add("Content-Type", val[0])
 	}
 
 	if val, ok := src["Kbn-Xsrf"]; ok {
 		dest.Add("Kbn-Xsrf", val[0])
+	}
+
+	if val, ok := src["Authorization"]; ok {
+		dest.Add("Authorization", val[0])
 	}
 }
 
@@ -502,7 +523,7 @@ func main() {
 	}
 
 	if ver {
-		version := 1.1
+		version := 1.5
 		logrus.Infof("Current version is: v%.1f", version)
 		os.Exit(0)
 	}
