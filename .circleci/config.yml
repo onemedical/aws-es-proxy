@@ -1,6 +1,13 @@
 version: 2.1
 orbs:
-  aws-ecr: circleci/aws-ecr@8.1.2
+  aws-ecr: circleci/aws-ecr@9.0.1
+  aws-cli: circleci/aws-cli@4.1.1
+
+
+parameters:
+  oidc_role:
+    type: string
+    default: 'arn:aws:iam::193567999519:role/aws-es-proxy-oidc'
 
 commands:
 
@@ -20,9 +27,15 @@ jobs:
     steps:
       - checkout
       - create_image_tag
-      - aws-ecr/build-and-push-image:
+      - aws-ecr/build_and_push_image:
+          account_id: '${AWS_ECR_REGISTRY_ID}'
+          auth:
+            - aws-cli/setup:
+                role_arn: '<<pipeline.parameters.oidc_role>>'
+                role_session_name: circleci
           dockerfile: Dockerfile
           repo: onemedical/aws-es-proxy
+          region: '${AWS_REGION}'
           # comma added by RELEASE_TAG if set. Kludge to get this to work is simpler than most alternatives.
           tag: '${VERSION_TAG},${VERSION_TAG}-${CIRCLE_SHA1},${RELEASE_TAG}${CIRCLE_TAG}'
 
