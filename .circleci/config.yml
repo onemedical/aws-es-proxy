@@ -36,6 +36,7 @@ jobs:
           dockerfile: Dockerfile
           repo: onemedical/aws-es-proxy
           region: '${AWS_REGION}'
+          # comma added by RELEASE_TAG if set. Kludge to get this to work is simpler than most alternatives.
           tag: '${VERSION_TAG},${VERSION_TAG}-${CIRCLE_SHA1},${RELEASE_TAG}${CIRCLE_TAG}'
 
 workflows:
