@@ -32,7 +32,7 @@ jobs:
           auth:
             - aws-cli/setup:
                 role_arn: '<<pipeline.parameters.oidc_role>>'
-                role_session_name: 'circleci'
+                role_session_name: circleci
           dockerfile: Dockerfile
           repo: onemedical/aws-es-proxy
           region: '${AWS_REGION}'
