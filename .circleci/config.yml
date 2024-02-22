@@ -35,6 +35,10 @@ jobs:
                 role_session_name: circleci
           dockerfile: Dockerfile
           repo: onemedical/aws-es-proxy
+          # This is required for newer versions of buildx as AWS Lambda does
+          # not appear to support images built with provenance attestations.
+          # See https://github.com/docker/buildx/issues/1533
+          extra_build_args: '--provenance=false'
           region: '${AWS_REGION}'
           # comma added by RELEASE_TAG if set. Kludge to get this to work is simpler than most alternatives.
           tag: '${VERSION_TAG},${VERSION_TAG}-${CIRCLE_SHA1},${RELEASE_TAG}${CIRCLE_TAG}'
