@@ -1,11 +1,11 @@
-FROM golang:1.20-alpine
+FROM golang:1.30-alpine
 
 WORKDIR /go/src/github.com/abutaha/aws-es-proxy
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o aws-es-proxy
 
-FROM alpine:3.17
+FROM alpine:3.20
 LABEL name="aws-es-proxy" \
       version="latest"
 
