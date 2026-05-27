@@ -1,11 +1,13 @@
-FROM golang:1.23-alpine
+# golang:1.23-alpine
+FROM 329601960842.dkr.ecr.us-east-1.amazonaws.com/docker/library/golang@sha256:383395b794dffa5b53012a212365d40c8e37109a626ca30d6151c8348d380b5f
 
 WORKDIR /go/src/github.com/abutaha/aws-es-proxy
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o aws-es-proxy
 
-FROM alpine:3.20
+# alpine:3.20
+FROM 329601960842.dkr.ecr.us-east-1.amazonaws.com/docker/library/alpine@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
 LABEL name="aws-es-proxy" \
       version="latest"
 

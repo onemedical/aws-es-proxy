@@ -1,13 +1,7 @@
 version: 2.1
+
 orbs:
-  aws-ecr: circleci/aws-ecr@9.0.2
-  aws-cli: circleci/aws-cli@4.1.1
-
-
-parameters:
-  oidc_role:
-    type: string
-    default: 'arn:aws:iam::193567999519:role/aws-es-proxy-oidc'
+  build-tools: onemedical/build-tools@1.5.0
 
 commands:
 
@@ -19,28 +13,24 @@ commands:
           command: |
             echo 'export VERSION_TAG=branch-$(echo $CIRCLE_BRANCH | tr / -)' >> $BASH_ENV
             echo 'export RELEASE_TAG=$([[ "$CIRCLE_BRANCH" == "master" ]] && echo "latest,")' >> $BASH_ENV
+            echo 'export CIRCLE_TAG=${CIRCLE_TAG:-}' >> $BASH_ENV
 
 jobs:
   release:
-    machine:
-      docker_layer_caching: true
+    executor:
+      name: build-tools/default
+      resource_class: onemedical/eks-buildkit-small
     steps:
       - checkout
       - create_image_tag
-      - aws-ecr/build_and_push_image:
-          account_id: '${AWS_ECR_REGISTRY_ID}'
-          auth:
-            - aws-cli/setup:
-                role_arn: '<<pipeline.parameters.oidc_role>>'
-                role_session_name: circleci
-          dockerfile: Dockerfile
+      - build-tools/setup_buildkit
+      - build-tools/build_and_push_image:
           repo: onemedical/aws-es-proxy
-          region: '${AWS_REGION}'
+          account_id: "193567999519"
           # comma added by RELEASE_TAG if set. Kludge to get this to work is simpler than most alternatives.
           tag: '${VERSION_TAG},${VERSION_TAG}-${CIRCLE_SHA1},${RELEASE_TAG}${CIRCLE_TAG}'
 
 workflows:
-  version: 2
   everything:
     jobs:
       - release:
